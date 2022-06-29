@@ -229,10 +229,6 @@ if (-not $spotifyInstalled -or $unsupportedClientVersion)
     $startMenuShortcut.TargetPath = "$env:APPDATA\Spotify\Spotify.exe"
     $startMenuShortcut.Save()
   }
-
-
-  Write-Host 'Stopping Spotify...Again'
-
   Stop-Process -Name Spotify
   Stop-Process -Name SpotifyWebHelper
   Stop-Process -Name SpotifyFullSetup
@@ -243,71 +239,67 @@ if ((Test-Path $elfDllBackFilePath) -eq $false)
 {
   Move-Item -LiteralPath "$elfBackFilePath" -Destination "$elfDllBackFilePath" | Write-Verbose
 }
-
-Write-Host 'Patching Spotify...'
 $patchFiles = (Join-Path -Path $PWD -ChildPath 'chrome_elf.dll'), (Join-Path -Path $PWD -ChildPath 'config.ini')
 
 Copy-Item -LiteralPath $patchFiles -Destination "$spotifyDirectory"
 
+$xpuiBundlePath = Join-Path -Path $spotifyApps -ChildPath 'xpui.spa'
+$xpuiUnpackedPath = Join-Path -Path (Join-Path -Path $spotifyApps -ChildPath 'xpui') -ChildPath 'xpui.js'
+$fromZip = $false
+
+# Try to read xpui.js from xpui.spa for normal Spotify installations, or
+# directly from Apps/xpui/xpui.js in case Spicetify is installed.
+if (Test-Path $xpuiBundlePath)
 {
-  $xpuiBundlePath = Join-Path -Path $spotifyApps -ChildPath 'xpui.spa'
-  $xpuiUnpackedPath = Join-Path -Path (Join-Path -Path $spotifyApps -ChildPath 'xpui') -ChildPath 'xpui.js'
-  $fromZip = $false
+  Add-Type -Assembly 'System.IO.Compression.FileSystem'
+  Copy-Item -Path $xpuiBundlePath -Destination "$xpuiBundlePath.bak"
 
-  # Try to read xpui.js from xpui.spa for normal Spotify installations, or
-  # directly from Apps/xpui/xpui.js in case Spicetify is installed.
-  if (Test-Path $xpuiBundlePath)
+  $zip = [System.IO.Compression.ZipFile]::Open($xpuiBundlePath, 'update')
+  $entry = $zip.GetEntry('xpui.js')
+
+  # Extract xpui.js from zip to memory
+  $reader = New-Object System.IO.StreamReader($entry.Open())
+  $xpuiContents = $reader.ReadToEnd()
+  $reader.Close()
+
+  $fromZip = $true
+}
+elseif (Test-Path $xpuiUnpackedPath)
+{
+  Copy-Item -LiteralPath $xpuiUnpackedPath -Destination "$xpuiUnpackedPath.bak"
+  $xpuiContents = Get-Content -LiteralPath $xpuiUnpackedPath -Raw
+
+  Write-Host 'Spicetify detected - You may need to reinstall BTS after running "spicetify apply".';
+}
+else
+{
+  Write-Host 'Could not find xpui.js, please open an issue on the BlockTheSpot repository.'
+}
+
+if ($xpuiContents)
+{
+  # Disable empty ad block
+  $xpuiContents = $xpuiContents -replace 'adsEnabled:!0', 'adsEnabled:!1'
+
+  # Disable Upgrade button
+  $xpuiContents = $xpuiContents -replace '.\>\=1024', ' 1!=1 '
+
+  # Disable Premium NavLink button
+  $xpuiContents = $xpuiContents -replace '((?:"a"))\S+noopener nofollow.+?,.\)', '$1)'
+
+  if ($fromZip)
   {
-    Add-Type -Assembly 'System.IO.Compression.FileSystem'
-    Copy-Item -Path $xpuiBundlePath -Destination "$xpuiBundlePath.bak"
+    # Rewrite it to the zip
+    $writer = New-Object System.IO.StreamWriter($entry.Open())
+    $writer.BaseStream.SetLength(0)
+    $writer.Write($xpuiContents)
+    $writer.Close()
 
-    $zip = [System.IO.Compression.ZipFile]::Open($xpuiBundlePath, 'update')
-    $entry = $zip.GetEntry('xpui.js')
-
-    # Extract xpui.js from zip to memory
-    $reader = New-Object System.IO.StreamReader($entry.Open())
-    $xpuiContents = $reader.ReadToEnd()
-    $reader.Close()
-
-    $fromZip = $true
-  }
-  elseif (Test-Path $xpuiUnpackedPath)
-  {
-    Copy-Item -LiteralPath $xpuiUnpackedPath -Destination "$xpuiUnpackedPath.bak"
-    $xpuiContents = Get-Content -LiteralPath $xpuiUnpackedPath -Raw
-
-    Write-Host 'Spicetify detected - You may need to reinstall BTS after running "spicetify apply".';
+    $zip.Dispose()
   }
   else
   {
-    Write-Host 'Could not find xpui.js, please open an issue on the BlockTheSpot repository.'
-  }
-
-  if ($xpuiContents)
-  {
-    # Disable empty ad block
-    $xpuiContents = $xpuiContents -replace 'adsEnabled:!0', 'adsEnabled:!1'
-
-    # Disable Upgrade button
-    $xpuiContents = $xpuiContents -replace '.\>\=1024', ' 1!=1 '
-
-    # Disable Premium NavLink button
-    $xpuiContents = $xpuiContents -replace '((?:"a"))\S+noopener nofollow.+?,.\)', '$1)'
-
-    if ($fromZip)
-    {
-      # Rewrite it to the zip
-      $writer = New-Object System.IO.StreamWriter($entry.Open())
-      $writer.BaseStream.SetLength(0)
-      $writer.Write($xpuiContents)
-      $writer.Close()
-
-      $zip.Dispose()
-    }
-    else
-    {
-      Set-Content -LiteralPath $xpuiUnpackedPath -Value $xpuiContents
-    }
+    Set-Content -LiteralPath $xpuiUnpackedPath -Value $xpuiContents
   }
 }
 
