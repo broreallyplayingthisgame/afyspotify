@@ -100,7 +100,6 @@ Made by Afyzone
 Write-Host @'
 *****************
 used @mrponds source and made it more automated
-*****************
 '@
 
 $spotifyDirectory = Join-Path -Path $env:APPDATA -ChildPath 'Spotify'
@@ -108,8 +107,6 @@ $spotifyExecutable = Join-Path -Path $spotifyDirectory -ChildPath 'Spotify.exe'
 $spotifyApps = Join-Path -Path $spotifyDirectory -ChildPath 'Apps'
 
 [System.Version] $actualSpotifyClientVersion = (Get-ChildItem -LiteralPath $spotifyExecutable -ErrorAction:SilentlyContinue).VersionInfo.ProductVersionRaw
-
-Write-Host "Stopping Spotify...`n"
 Stop-Process -Name Spotify
 Stop-Process -Name SpotifyWebHelper
 
@@ -305,13 +302,12 @@ Remove-Item -LiteralPath $tempDirectory -Recurse
 Start-Process -WorkingDirectory $spotifyDirectory -FilePath $spotifyExecutable
 Write-Host @'
 *****************
-    afy
-    afy
-    afyafy
-  afy   afy
-  afy   afy
-afyafyafyafyafy
-afy         afy
+________   ____ 
+______ ___/ __/____  __
+_/ __ `/_  /_ __  / / /
+/ /_/ /_  __/ _  /_/ / 
+\__,_/ /_/    _\__, /  
+              /____/   
 *****************
 Done.
 '@
