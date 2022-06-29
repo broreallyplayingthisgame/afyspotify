@@ -302,12 +302,14 @@ Remove-Item -LiteralPath $tempDirectory -Recurse
 Start-Process -WorkingDirectory $spotifyDirectory -FilePath $spotifyExecutable
 Write-Host @'
 *****************
-________   ____ 
-______ ___/ __/____  __
-_/ __ `/_  /_ __  / / /
-/ /_/ /_  __/ _  /_/ / 
-\__,_/ /_/    _\__, /  
+
+           ____ 
+  ____    / __/  __  __
+ / __ ` _/ /_   / / / /
+/ /_/ /_  __/  / /_/ / 
+\__,_/ /_/     \__, /  
               /____/   
+
 *****************
 Done.
 '@
