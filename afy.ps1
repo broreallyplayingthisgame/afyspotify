@@ -96,7 +96,6 @@ function Test-SpotifyVersion
 Write-Host @'
 *****************
 Made by Afyzone
-*****************
 '@
 Write-Host @'
 *****************
@@ -142,8 +141,6 @@ catch
   Read-Host 'Press any key to exit...'
   exit
 }
-
-Write-Host "Downloading latest patch (chrome_elf.zip)...`n"
 $elfPath = Join-Path -Path $PWD -ChildPath 'chrome_elf.zip'
 try
 {
@@ -302,19 +299,19 @@ if ($xpuiContents)
     Set-Content -LiteralPath $xpuiUnpackedPath -Value $xpuiContents
   }
 }
-
 $tempDirectory = $PWD
 Pop-Location
-
 Remove-Item -LiteralPath $tempDirectory -Recurse
-
-Write-Host 'Patching Complete, starting Spotify...'
-
 Start-Process -WorkingDirectory $spotifyDirectory -FilePath $spotifyExecutable
-Write-Host 'Done.'
-
 Write-Host @'
 *****************
-afy
+    afy
+    afy
+    afyafy
+  afy   afy
+  afy   afy
+afyafyafyafyafy
+afy         afy
 *****************
+Done.
 '@
